@@ -1,7 +1,9 @@
+---
 apiVersion: v1
 kind: ReplicationController
 metadata:
   name: gitlab
+  namespace: gitlab
 spec:
   replicas: 1
   selector:
@@ -16,32 +18,50 @@ spec:
         - name: gitlab
           image: sameersbn/gitlab:16.9.2
           env:
+            - name: DEBUG
+              value: "false"
+
             - name: TZ
-              value: Asia/Kolkata
+              value: "Asia/Tokyo"
             - name: GITLAB_TIMEZONE
-              value: Kolkata
+              value: "Tokyo"
+
+            - name: GITLAB_UNICORN_MEMORY_MAX
+              value: "629145600"
+            - name: GITLAB_HTTPS
+              value: "false"
+            - name: SSL_SELF_SIGNED
+              value: "false"
+            - name: OAUTH_ENABLED
+              value: "false"
 
             - name: GITLAB_SECRETS_DB_KEY_BASE
-              value: long-and-random-alpha-numeric-string
+              value: 1c10d46a57abd38c2c7957d87980fecb
             - name: GITLAB_SECRETS_SECRET_KEY_BASE
-              value: long-and-random-alpha-numeric-string
+              value: e927734a7fdb0363e078ede99e4d7180
             - name: GITLAB_SECRETS_OTP_KEY_BASE
-              value: long-and-random-alpha-numeric-string
+              value: 4f69440296aa7db3be56c5ea2d8f3876
 
             - name: GITLAB_ROOT_PASSWORD
-              value:
+              value: ""
             - name: GITLAB_ROOT_EMAIL
-              value:
+              value: "gitlab-admin@example.com"
+            - name: GITLAB_EMAIL_REPLY_TO
+              value: "gitlab-admin@example.com"
+            - name: GITLAB_EMAIL_SUBJECT_SUFFIX
+              value: "[Gitlab]"
 
+            - name: GITLAB_RELATIVE_URL_ROOT
+              value: "/gitlab"
             - name: GITLAB_HOST
-              value: git.default.cluster.local
+              value: "external.example.com"
             - name: GITLAB_PORT
               value: "80"
             - name: GITLAB_SSH_PORT
-              value: "22"
+              value: "10022"
 
             - name: GITLAB_NOTIFY_ON_BROKEN_BUILDS
-              value: "true"
+              value: "false"
             - name: GITLAB_NOTIFY_PUSHER
               value: "false"
 
@@ -50,6 +70,8 @@ spec:
             - name: GITLAB_BACKUP_TIME
               value: 01:00
 
+            - name: DB_ADAPTER
+              value: "postgresql"
             - name: DB_TYPE
               value: postgres
             - name: DB_HOST
@@ -59,7 +81,7 @@ spec:
             - name: DB_USER
               value: gitlab
             - name: DB_PASS
-              value: passw0rd
+              value: e6cb3ac870c56287
             - name: DB_NAME
               value: gitlab_production
 
@@ -69,36 +91,56 @@ spec:
               value: "6379"
 
             - name: SMTP_ENABLED
-              value: "false"
-            - name: SMTP_DOMAIN
-              value: www.example.com
-            - name: SMTP_HOST
-              value: smtp.gmail.com
-            - name: SMTP_PORT
-              value: "587"
-            - name: SMTP_USER
-              value: mailer@example.com
-            - name: SMTP_PASS
-              value: password
-            - name: SMTP_STARTTLS
               value: "true"
+            - name: SMTP_DOMAIN
+              value: "example.com"
+            - name: SMTP_HOST
+              value: "smtp.example.com"
+            - name: SMTP_PORT
+              value: "25"
+            - name: SMTP_USER
+              value: ""
+            - name: SMTP_PASS
+              value: ""
+            - name: SMTP_STARTTLS
+              value: "false"
             - name: SMTP_AUTHENTICATION
-              value: login
+              value: "plain"
 
             - name: IMAP_ENABLED
               value: "false"
-            - name: IMAP_HOST
-              value: imap.gmail.com
-            - name: IMAP_PORT
-              value: "993"
-            - name: IMAP_USER
-              value: mailer@example.com
-            - name: IMAP_PASS
-              value: password
-            - name: IMAP_SSL
+
+            - name: LDAP_ENABLED
               value: "true"
-            - name: IMAP_STARTTLS
+            - name: LDAP_LABEL
+              value: "AINS LDAP"
+            - name: LDAP_HOST
+              value: "ldap.example.com"
+            - name: LDAP_PORT
+              value: "636"
+            - name: LDAP_UID
+              value: "uid"
+            - name: LDAP_METHOD
+              value: "simple_tls"
+            - name: LDAP_VERIFY_SSL
+              value: "true"
+            - name: LDAP_ACTIVE_DIRECTORY
               value: "false"
+            - name: LDAP_ALLOW_USERNAME_OR_EMAIL_LOGIN
+              value: "true"
+            - name: LDAP_BLOCK_AUTO_CREATED_USERS
+              value: "true"
+            - name: LDAP_BASE
+              value: "ou=People,ou=Proxy,dc=example,dc=com"
+            - name: LDAP_USER_ATTRIBUTE_NAME
+              value: "gecos"
+            - name: LDAP_USER_ATTRIBUTE_FIRSTNAME
+              value: "gecos"
+            - name: LDAP_USER_ATTRIBUTE_LASTNAME
+              value: "uid"
+            - name: LDAP_PREVENT_LDAP_SIGN_IN
+              value: "false"
+
           ports:
             - name: http
               containerPort: 80
@@ -107,18 +149,19 @@ spec:
           volumeMounts:
             - mountPath: /home/git/data
               name: data
-          livenessProbe:
-            httpGet:
-              path: /
-              port: 80
-            initialDelaySeconds: 180
-            timeoutSeconds: 5
-          readinessProbe:
-            httpGet:
-              path: /
-              port: 80
-            initialDelaySeconds: 5
-            timeoutSeconds: 1
+          #livenessProbe:
+          #  httpGet:
+          #    path: /gitlab/
+          #    port: 80
+          #  initialDelaySeconds: 180
+          #  timeoutSeconds: 5
+          #readinessProbe:
+          #  httpGet:
+          #    path: /gitlab/
+          #    port: 80
+          #  initialDelaySeconds: 5
+          #  timeoutSeconds: 1
       volumes:
         - name: data
-          emptyDir: {}
+          persistentVolumeClaim:
+            claimName: gitlab-data-pvc
