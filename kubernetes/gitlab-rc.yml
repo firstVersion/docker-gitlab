@@ -52,9 +52,9 @@ spec:
               value: "[Gitlab]"
 
             - name: GITLAB_RELATIVE_URL_ROOT
-              value: "/gitlab"
+              value: "/"
             - name: GITLAB_HOST
-              value: "external.example.com"
+              value: "gitlab.8no.local"
             - name: GITLAB_PORT
               value: "80"
             - name: GITLAB_SSH_PORT
